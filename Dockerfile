@@ -1,18 +1,38 @@
+# Builder image
+# =============
+FROM ruby:3.4.7-alpine AS builder
+
+WORKDIR /fibscale
+
+RUN apk add --no-cache g++ git make && \
+    addgroup -S fibscale && \
+    adduser -D -G fibscale -S fibscale && \
+    chown fibscale:fibscale /fibscale
+
+COPY --chown=fibscale:fibscal Gemfile Gemfile.lock ./
+
+USER fibscale:fibscale
+
+RUN bundle config --global frozen 1 && \
+    bundle config set --local deployment 'true' && \
+    bundle install
+
+COPY --chown=fibscale:fibscale ./ ./
+
+# Final image
+# ===========
 FROM ruby:3.4.7-alpine
 
-WORKDIR /usr/src/app
+WORKDIR /fibscale
 
 RUN addgroup -S fibscale && \
     adduser -D -G fibscale -S fibscale && \
-    chown fibscale:fibscale /usr/src/app
+    chown fibscale:fibscale /fibscale && \
+    bundle config set --local deployment 'true'
 
-COPY --chown=fibscale:fibscal Gemfile Gemfile.lock ./
-RUN apk add --no-cache --virtual .build-deps g++ git make && \
-    bundle config --global frozen 1 && \
-    bundle install && \
-    apk del .build-deps
+COPY --chown=fibscale:fibscale --from=builder /fibscale/ ./
 
-COPY . ./
+USER fibscale:fibscale
 
 CMD ["bundle", "exec", "ruby", "fibscale.rb"]
 
