@@ -4,7 +4,7 @@ FROM ruby:3.4.7-alpine AS builder
 
 WORKDIR /fibscale
 
-RUN apk add --no-cache g++ git make && \
+RUN apk add --no-cache g++ make && \
     addgroup -S fibscale && \
     adduser -D -G fibscale -S fibscale && \
     chown fibscale:fibscale /fibscale
